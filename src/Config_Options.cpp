@@ -29,12 +29,15 @@
 #include <stdio.h>
 
 #include "Channel.hpp"
-#include "config.hpp"
+// #include "config.hpp"
 #include <Config_Options.hpp>
 #include <VZException.hpp>
 #ifdef ENABLE_MQTT
 #include "mqtt.hpp"
 #endif
+
+#define PACKAGE "vzlogger-bazel-test"
+#define VERSION "0.9.0-bazel"
 
 static const char *option_type_str[] = {"null",   "boolean", "double", "int",
 										"object", "array",   "string"};

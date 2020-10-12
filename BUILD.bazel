@@ -1,0 +1,118 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
+
+package(default_visibility = ["//visibility:public"])
+
+#licenses(["COPYING"]) # Deprecated
+
+#exports_files(["COPYING"])
+
+# OPTION(ENABLE_SML
+#   "enable support for smart messaging language (def=yes)])"
+#   On)
+config_setting(
+    name = "enable_sml",
+    values = {"define": "ENABLE_SML=yes"}
+)
+# OPTION(ENABLE_OMS
+#   "enable support for OMS (M-Bus) based devices (def=yes)"
+#   On)
+config_setting(
+    name = "enable_oms",
+    values = {"define": "ENABLE_OML=yes"}
+)
+
+# OPTION(ENABLE_LOCAL
+#   "enable support for local HTTPd (def=yes)]"
+#   On)
+config_setting(
+    name = "enable_local",
+    values = {"define": "ENABLE_LOCAL=yes"}
+)
+# OPTION(ENABLE_MQTT
+#   "enable MQTT client support (def=yes)"
+#   On)
+config_setting(
+    name = "enable_mqtt",
+    values = {"define": "ENABLE_MQTT=yes"}
+)
+# OPTION(WITH_READER
+#   "compile reader to for testing your meters (def=yes)])"
+#   On)
+config_setting(
+    name = "with_reader",
+    values = {"define": "WITH_READER=yes"}
+)
+# OPTION(ENABLE_OCR
+# 	"enable support for OCR image/processing meter (def=off)"
+# 	OFF)
+config_setting(
+    name = "enable_ocr",
+    values = {"define": "ENABLE_OCR=off"}
+)
+
+# OPTION(ENABLE_OCR_TESSERACT
+# 	"enable support for OCR text recognition meter (def=off)"
+# 	OFF)
+config_setting(
+    name = "enable_ocr_tesseract",
+    values = {"define": "ENABLE_OCR_TESSERACT=off"}
+)
+
+# OPTION(METEREXEC_ROOTACCESS
+#   "compile MeterExec protocol to use root privileges for script calls (def=no)])"
+#   Off)
+config_setting(
+    name = "meterexec_rootaccess",
+    values = {"define": "METEREXEC_ROOTACCESS=off"}
+)
+
+# OPTION(BUILD_TEST
+#   "build unit tests (def=on)])"
+#   On)
+config_setting(
+    name = "build_test",
+    values = {"define": "BUILD_TEST=on"}
+)
+
+config_setting(
+    name = "has_config_hpp",
+    values = {
+        "define": "HAS_CONFIG_HPP=1"
+    }
+)
+
+cc_library(
+    name = "vzlogger",
+    srcs = glob(
+        include = [
+            "src/**/*.cpp"
+        ],
+        exclude = [
+            "src/test.cpp"
+        ]
+    ),
+    hdrs = glob([
+        "include/**/*.h",
+        "include/**/*.hpp"
+    ]),
+    defines = select({
+        ":has_config_hpp": ["HAS_CONFIG_HPP=1"],
+        "//conditions:default": [],
+    }),
+    includes = [
+        "include"
+    ]
+)
+
+cc_binary(
+    name = "vzlogger_bin",
+    srcs = ["src/vzlogger.cpp"],
+    deps = [":vzlogger"]
+)
+
+cc_test(
+    name = "vzlogger_test",
+    size = "small",
+    srcs = ["tests"],
+    deps = [":vzlogger_bin"]
+)
