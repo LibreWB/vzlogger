@@ -194,6 +194,13 @@ pushd "$lib_dir"
 		git_update libmbus https://github.com/rscada/libmbus.git
 	fi
 
+	if [ -z "$1" ] || contains "$*" prometheus-cpp; then
+		echo
+		echo "checking for prometheus-cpp" https://github.com/jupp0r/prometheus-cpp.git
+
+		git_update prometheus-cpp 
+	fi
+
 
 	###############################
 	echo
@@ -239,6 +246,27 @@ pushd "$lib_dir"
 
 			./build.sh
 			sudo make install
+		popd
+	fi
+
+	if [ -z "$1" ] || contains "$*" prometheus-cpp; then
+		echo
+		echo "building and installing prometheus-cpp"
+		pushd prometheus-cpp
+			if contains "$*" clean; then make clean; fi
+
+			git submodule init
+			git submodule update
+
+			mkdir _build
+			cd _build
+
+			cmake .. -DBUILD_SHARED_LIBS=OFF
+			make -j 4
+			ctest -V
+
+			mkdir -p deploy
+			make DESTDIR=`pwd`/deploy install
 		popd
 	fi
 
