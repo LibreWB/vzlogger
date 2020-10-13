@@ -58,6 +58,9 @@ OPTION(ENABLE_LOCAL
 OPTION(ENABLE_MQTT
   "enable MQTT client support (def=yes)"
   On)
+OPTION(ENABLE_PROMETHEUS_METRICS
+  "enable Prometheus metrics feature (def=yes)"
+  On)
 OPTION(WITH_READER
   "compile reader to for testing your meters (def=yes)])"
   On)
@@ -124,6 +127,14 @@ if(ENABLE_MQTT)
 else()
   message( STATUS "MQTT support disabled. If wanted use ENABLE_MQTT=On")
 endif(ENABLE_MQTT)
+
+if(ENABLE_PROMETHEUS_METRICS)
+  include(FindPrometheus)
+  if(PROMETHEUS_CPP_FOUND)
+    set(PROMETHEUS_METRICS_SUPPORT 1)
+    include_directories(${SML_INCLUDE_DIR})
+  endif(PROMETHEUS_CPP_FOUND)
+endif(ENABLE_PROMETHEUS_METRICS)
 
 if( ENABLE_OCR OR ENABLE_OCR_TESSERACT )
 	include(FindLeptonica)
@@ -274,6 +285,9 @@ endif(METEREXEC_ROOTACCESS)
 if(MBUS_FOUND)
 message("             libmbus: -L${MBUS_LIBRARY} -I${MBUS_INCLUDE_DIR}")
 endif(MBUS_FOUND)
+#if(PROMETHEUS_METRICS_FOUND)
+message("             prometheus-cpp: -L${PROMETHEUS_CPP_LIBRARY} -I${PROMETHEUS_CPP_LIBRARY}")
+#endif(PROMETHEUS_METRICS_FOUND)
 
 if( ENABLE_SML AND NOT SML_FOUND)
   message(WARNING "libsml was not found.
@@ -283,6 +297,9 @@ if( ENABLE_LOCAL AND NOT MICROHTTPD_FOUND )
   message(WARNING "microhttpd was not found. Ignored ENABLE_LOCAL!
 Install microhttpd or call cmake -DMICROHTTPD_HOME=path_to_microhttpd_install")
 endif( ENABLE_LOCAL AND NOT MICROHTTPD_FOUND )
+if(ENABLE_PROMETHEUS_METRICS AND NOT PROMETHEUS_CPP_FOUND)
+  message(WARNING "prometheus-cpp was not found. Ignored ENABLE_PROMETHEUS_METRICS!")
+endif(ENABLE_PROMETHEUS_METRICS AND NOT PROMETHEUS_CPP_FOUND)
 
 # add some files to the installation target
 INSTALL(FILES README.md COPYING DESTINATION

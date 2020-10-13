@@ -7,6 +7,9 @@
 /* mqtt support */
 #cmakedefine ENABLE_MQTT 1
 
+/* Prometheus integration */
+#cmakedefine ENABLE_PROMETHEUS_METRICS 1
+
 /* Name of package */
 #define PACKAGE "vzlogger"
 

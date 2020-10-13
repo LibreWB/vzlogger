@@ -1,0 +1,72 @@
+# -*- mode: cmake; -*-
+# - Try to find prometheus-cpp include dirs and libraries
+# Usage of this module as follows:
+# This file defines:
+# * PROMETHEUS_CPP_FOUND if protoc was found
+# * PROMETHEUS_CPP_LIBRARY The lib to link to (currently only a static unix lib, not
+# portable)
+# * PROMETHEUS_CPP_INCLUDE_DIR The include directories for libmbus.
+
+message(STATUS "FindPrometheus check")
+IF (NOT WIN32)
+  include(FindPkgConfig)
+  if ( PKG_CONFIG_FOUND )
+
+     pkg_check_modules (PC_PROMETHEUS_CPP prometheus-cpp>=0.10.0)
+
+     set(PROMETHEUS_CPP_DEFINITIONS ${PC_PROMETHEUS_CPP_CFLAGS_OTHER})
+  endif(PKG_CONFIG_FOUND)
+endif (NOT WIN32)
+
+message(STATUS "Looking for prometheus-cpp in ${PC_PROMETHEUS_CPP_INCLUDEDIR}")
+
+# find the include files
+FIND_PATH(PROMETHEUS_CPP_INCLUDEDIR prometheus/detail/core_export.h
+   HINTS
+     ${PC_PROMETHEUS_CPP_INCLUDEDIR}
+     ${PC_PROMETHEUS_CPP_INCLUDE_DIRS}
+    ${CMAKE_INCLUDE_PATH}
+)
+FIND_PATH(PROMETHEUS_CPP_INCLUDEDIR prometheus/detail/push_export.h
+   HINTS
+     ${PC_PROMETHEUS_CPP_INCLUDEDIR}
+     ${PC_PROMETHEUS_CPP_INCLUDE_DIRS}
+    ${CMAKE_INCLUDE_PATH}
+)
+FIND_PATH(PROMETHEUS_CPP_INCLUDEDIR prometheus/detail/pull_export.h
+   HINTS
+     ${PC_PROMETHEUS_CPP_INCLUDEDIR}
+     ${PC_PROMETHEUS_CPP_INCLUDE_DIRS}
+    ${CMAKE_INCLUDE_PATH}
+)
+
+# locate the library
+#IF(WIN32)
+#  SET(PROMETHEUS_CPP_LIBRARY_NAMES ${PROMETHEUS_CPP_LIBRARY_NAMES} libmbus.lib)
+#ELSE(WIN32)
+  SET(PROMETHEUS_CPP_LIBRARY_NAMES ${PROMETHEUS_CPP_LIBRARY_NAMES} libprometheus-cpp-core.a)
+  SET(PROMETHEUS_CPP_LIBRARY_NAMES ${PROMETHEUS_CPP_LIBRARY_NAMES} libprometheus-cpp-push.a)
+  SET(PROMETHEUS_CPP_LIBRARY_NAMES ${PROMETHEUS_CPP_LIBRARY_NAMES} libprometheus-cpp-pull.a)
+#ENDIF(WIN32)
+FIND_LIBRARY(PROMETHEUS_CPP_LIBRARY NAMES ${PROMETHEUS_CPP_LIBRARY_NAMES}
+  HINTS
+    ${PC_PROMETHEUS_CPP_LIBDIR}
+    ${PC_PROMETHEUS_CPP_LIBRARY_DIRS}
+)
+
+# if the include and the program are found then we have it
+IF(PROMETHEUS_CPP_INCLUDE_DIR AND PROMETHEUS_CPP_LIBRARY)
+  SET(PROMETHEUS_CPP_FOUND "YES")
+  message("prometheus-cpp found: '${PROMETHEUS_CPP_INCLUDE_DIR}'")
+#  SET(PROMETHEUS_CPP_INCLUDE_DIR ${PROMETHEUS_CPP-C_INCLUDE_DIR})
+ENDIF(PROMETHEUS_CPP_INCLUDE_DIR AND PROMETHEUS_CPP_LIBRARY)
+
+if( NOT WIN32)
+  list(APPEND PROMETHEUS_CPP_LIBRARY "-lm")
+endif( NOT WIN32)
+
+MARK_AS_ADVANCED(
+  PROMETHEUS_CPP_FOUND
+  PROMETHEUS_CPP_LIBRARY
+  PROMETHEUS_CPP_INCLUDE_DIR
+)
