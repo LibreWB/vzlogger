@@ -59,6 +59,10 @@
 #include "mqtt.hpp"
 #endif
 
+#ifdef ENABLE_PROMETHEUS_METRICS
+#include <Prometheus.hpp>
+#endif
+
 #include "gitSha1.h"
 
 MapContainer mappings;     // mapping between meters and channels
@@ -383,6 +387,10 @@ int main(int argc, char *argv[]) {
 	/* webserver for local interface */
 	struct MHD_Daemon *httpd_handle = NULL;
 #endif /* LOCAL_SUPPORT */
+
+#ifdef ENABLE_PROMETHEUS_METRICS
+	PrometheusClient *prometheusClient;
+#endif
 
 	sigaction(SIGINT, &action, NULL);  /* catch ctrl-c from terminal */
 	sigaction(SIGHUP, &action, NULL);  /* catch hangup signal */

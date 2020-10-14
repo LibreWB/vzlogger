@@ -261,12 +261,11 @@ pushd "$lib_dir"
 			mkdir _build
 			cd _build
 
-			cmake .. -DBUILD_SHARED_LIBS=OFF
+			cmake .. -DBUILD_SHARED_LIBS=OFF # Create static libraries
 			make -j 4
 			ctest -V
 
-			mkdir -p deploy
-			make DESTDIR=`pwd`/deploy install
+			sudo make install
 		popd
 	fi
 

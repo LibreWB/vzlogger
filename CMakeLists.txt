@@ -128,11 +128,16 @@ else()
   message( STATUS "MQTT support disabled. If wanted use ENABLE_MQTT=On")
 endif(ENABLE_MQTT)
 
+# Prometheus support
 if(ENABLE_PROMETHEUS_METRICS)
-  include(FindPrometheus)
+  include(FindPrometheusByJson)
   if(PROMETHEUS_CPP_FOUND)
+    message(WARNING "PROMETHEUS_CPP_FOUND")
     set(PROMETHEUS_METRICS_SUPPORT 1)
-    include_directories(${SML_INCLUDE_DIR})
+    include_directories(${PROMETHEUS_CPP_INCLUDE_DIR})
+  else(PROMETHEUS_CPP_FOUND)
+    message(FATAL_ERROR "prometheus-cpp is required.
+    Install prometheus-cpp or use install.sh prometheus-cpp")
   endif(PROMETHEUS_CPP_FOUND)
 endif(ENABLE_PROMETHEUS_METRICS)
 
