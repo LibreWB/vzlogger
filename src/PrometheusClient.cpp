@@ -83,5 +83,5 @@ PrometheusClient::RegisterMetrics(vz::api::PrometheusMetric * metricPtr) {
 	print(log_debug, R"(Appended label "%s" to counter family "%s" and created unique pointer.)",
 		  description->label.c_str(), description->measurementName.c_str(), LOG_NAME);
 
-	metricPtr.
+	return counter;
 }
