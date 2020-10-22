@@ -38,9 +38,11 @@
 #include "threads.h"
 #include <Config_Options.hpp>
 #include <MeterMap.hpp>
+#include <PrometheusClient.hpp>
 #include <api/InfluxDB.hpp>
 #include <api/MySmartGrid.hpp>
 #include <api/Null.hpp>
+#include <api/PrometheusMetric.hpp>
 #include <api/Volkszaehler.hpp>
 
 extern Config_Options options; /* global application options */
@@ -117,6 +119,13 @@ void MeterMap::registration() {
 			api = vz::ApiIF::Ptr(new vz::api::Null(*ch, (*ch)->options()));
 			print(log_debug, "Using null api- meter data available via local httpd if enabled.",
 				  (*ch)->name());
+		} else if (0 == strcasecmp((*ch)->apiProtocol().c_str(), "prometheus")) {
+			auto *prometheusMetric =
+				new vz::api::PrometheusMetric(*ch, (*ch)->options());
+			api = vz::ApiIF::Ptr(prometheusMetric);
+			print(log_debug, "Using Prometheus API", (*ch)->name());
+			prometheusMetric->InitCounter(PrometheusClient::GetInstance());
+			print(log_debug, "Registering Prometheus metric", (*ch)->name());
 		} else {
 			if (strcasecmp((*ch)->apiProtocol().c_str(), "volkszaehler"))
 				print(log_alert, "Wrong config! api: <%s> is unknown!", (*ch)->name(),
