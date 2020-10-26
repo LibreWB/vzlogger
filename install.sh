@@ -196,9 +196,9 @@ pushd "$lib_dir"
 
 	if [ -z "$1" ] || contains "$*" prometheus-cpp; then
 		echo
-		echo "checking for prometheus-cpp" https://github.com/jupp0r/prometheus-cpp.git
+		echo "checking for prometheus-cpp" 
 
-		git_update prometheus-cpp 
+		git_update prometheus-cpp https://github.com/jupp0r/prometheus-cpp.git 
 	fi
 
 
@@ -258,7 +258,10 @@ pushd "$lib_dir"
 			git submodule init
 			git submodule update
 
-			mkdir _build
+			if [ ! -e "_build" ]; then
+				mkdir _build
+			fi
+
 			cd _build
 
 			cmake .. -DBUILD_SHARED_LIBS=OFF # Create static libraries
