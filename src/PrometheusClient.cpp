@@ -78,8 +78,10 @@ PrometheusClient::RegisterMetrics(vz::api::PrometheusMetric * metricPtr) {
               description->measurementName.c_str(), LOG_NAME);
     }
 
+	// FIXME What is "value" in labels? Data type? Description of value?
+	// Also see: https://stackoverflow.com/questions/52883657/usage-guidelines-for-prometheus-c
     std::unique_ptr<prometheus::Counter> counter(
-        &familyCounter->Add({{description->label, "0.0"}}));
+        &familyCounter->Add({{description->label, "watt"}}));
     print(log_debug, R"(Appended label "%s" to counter family "%s" and created unique pointer.)",
           description->label.c_str(), description->measurementName.c_str(), LOG_NAME);
 
