@@ -90,11 +90,22 @@ vz::api::PrometheusMetric::PrometheusMetric(Channel::Ptr ch, std::list<Option> o
 	// std::string counter_name = "vzlogger_" + _measurementName;
 }
 
-vz::api::PrometheusMetric::~PrometheusMetric() {}
+vz::api::PrometheusMetric::~PrometheusMetric() { _counter = nullptr; }
 
 void vz::api::PrometheusMetric::send() {
+	Channel::Ptr ch = channel();
+	Buffer::Ptr buffer = ch->buffer();
 
+	buffer->lock();
+	for (auto & it : *buffer) {
+		// TODO What to do with timestamp? Is that "relevant"?
+		print(log_finest, "Reading buffer: timestamp %lld - value %f", ch->name(),
+			  it.time_ms(), it.value());
+		_counter->Increment(it.value());
+	}
+	buffer->unlock();
 }
+
 void vz::api::PrometheusMetric::InitCounter(PrometheusClient *prometheusClient) {
 	_counter = prometheusClient->RegisterMetrics(this);
 }
