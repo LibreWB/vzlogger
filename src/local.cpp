@@ -35,8 +35,12 @@
 #include "local.h"
 #include "vzlogger.h"
 #include <MeterMap.hpp>
+#include <PrometheusClient.hpp>
 #include <VZException.hpp>
 #include <pthread.h>
+
+#include "prometheus/serializer.h"
+#include "prometheus/text_serializer.h"
 
 extern Config_Options options;
 
@@ -51,6 +55,7 @@ typedef std::list<ChannelData> LIST_ChannelData;
 typedef std::map<std::string, LIST_ChannelData> MAP_UUID_ChannelData;
 pthread_mutex_t localbuffer_mutex = PTHREAD_MUTEX_INITIALIZER;
 MAP_UUID_ChannelData localbuffer;
+pthread_mutex_t prometheusmetrics_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void shrink_localbuffer() // remove old data in the local buffer
 {
@@ -163,63 +168,106 @@ int handle_request(void *cls, struct MHD_Connection *connection, const char *url
 				}
 			}
 
-			shrink_localbuffer(); // in case the channel return very few/seldom data
+			if (strcmp(url, "/metrics") == 0) {
+				if (options.prometheus_metrics()) {
+					pthread_mutex_lock(&prometheusmetrics_mutex);
+					PrometheusClient *prometheusClient = PrometheusClient::GetInstance();
+					auto serializer = std::unique_ptr<prometheus::Serializer>{new prometheus::TextSerializer()};
 
-			for (MapContainer::iterator mapping = mappings->begin(); mapping != mappings->end();
-				 mapping++) {
-				for (MeterMap::iterator ch = mapping->begin(); ch != mapping->end(); ch++) {
-					if (strcmp((*ch)->uuid(), uuid) == 0 || show_all) {
-						response_code = MHD_HTTP_OK;
+					std::vector<prometheus::MetricFamily> metrics = prometheusClient->CollectMetrics();
+					auto serializedMetrics = serializer->Serialize(metrics);
 
-						// blocking until new data arrives (comet-like blocking of HTTP response)
-						if (mode && strcmp(mode, "comet") == 0) {
-							// TODO wait only options.comet_timeout()!
-							// gettimeofday(&tp, NULL);
-							// ts.tv_sec = tp.tv_sec + options.comet_timeout();
-							// ts.tv_nsec = tp.tv_usec * 1000;
+					const char *response_str = serializedMetrics.c_str();
 
-							// (*ch)->wait(); // TODO not usefull with
-							// 			   // show_all! Wait only if this channel empty?
-						}
+                    response = MHD_create_response_from_buffer(
+                        strlen(response_str), static_cast<void *>(const_cast<char *>(response_str)),
+                        MHD_RESPMEM_MUST_COPY);
+                    response_code = MHD_HTTP_METHOD_NOT_ALLOWED;
 
-						struct json_object *json_ch = json_object_new_object();
+                    MHD_add_response_header(response, "Content-type", "text/plain");
+					pthread_mutex_unlock(&prometheusmetrics_mutex);
+				} else {
+					json_exception = json_object_new_object();
+					json_object_object_add(
+						json_exception, "message",
+						json_object_new_string("prometheus metrics are disabled"));
+					json_object_object_add(json_exception, "code", json_object_new_int(0));
 
-						json_object_object_add(json_ch, "uuid",
-											   json_object_new_string((*ch)->uuid()));
-						json_object_object_add(
-							json_ch, "last",
-							json_object_new_int64((*ch)->time_ms())); // return here in ms as well
-						json_object_object_add(json_ch, "interval",
-											   json_object_new_int(mapping->meter()->interval()));
-						json_object_object_add(
-							json_ch, "protocol",
-							json_object_new_string(
-								meter_get_details(mapping->meter()->protocolId())->name));
+                    json_object_object_add(json_obj, "version", json_object_new_string(VERSION));
+                    json_object_object_add(json_obj, "generator", json_object_new_string(PACKAGE));
+                    json_object_object_add(json_obj, "data", json_data);
 
-						struct json_object *json_tuples = api_json_tuples((*ch)->uuid());
-						if (json_tuples)
-							json_object_object_add(json_ch, "tuples", json_tuples);
+                    if (json_exception) {
+                        json_object_object_add(json_obj, "exception", json_exception);
+                    }
 
-						json_object_array_add(json_data, json_ch);
-					}
+                    json_str = json_object_to_json_string(json_obj);
+                    response = MHD_create_response_from_buffer(
+                        strlen(json_str), static_cast<void *>(const_cast<char *>(json_str)),
+                        MHD_RESPMEM_MUST_COPY);
+                    json_object_put(json_obj);
+
+                    MHD_add_response_header(response, "Content-type", "application/json");
 				}
+			} else {
+                shrink_localbuffer(); // in case the channel return very few/seldom data
+
+                for (MapContainer::iterator mapping = mappings->begin(); mapping != mappings->end();
+                     mapping++) {
+                    for (MeterMap::iterator ch = mapping->begin(); ch != mapping->end(); ch++) {
+                        if (strcmp((*ch)->uuid(), uuid) == 0 || show_all) {
+                            response_code = MHD_HTTP_OK;
+
+                            // blocking until new data arrives (comet-like blocking of HTTP response)
+                            if (mode && strcmp(mode, "comet") == 0) {
+                                // TODO wait only options.comet_timeout()!
+                                // gettimeofday(&tp, NULL);
+                                // ts.tv_sec = tp.tv_sec + options.comet_timeout();
+                                // ts.tv_nsec = tp.tv_usec * 1000;
+
+                                // (*ch)->wait(); // TODO not usefull with
+                                // 			   // show_all! Wait only if this channel empty?
+                            }
+
+                            struct json_object *json_ch = json_object_new_object();
+
+                            json_object_object_add(json_ch, "uuid",
+                                                   json_object_new_string((*ch)->uuid()));
+                            json_object_object_add(
+                                json_ch, "last",
+                                json_object_new_int64((*ch)->time_ms())); // return here in ms as well
+                            json_object_object_add(json_ch, "interval",
+                                                   json_object_new_int(mapping->meter()->interval()));
+                            json_object_object_add(
+                                json_ch, "protocol",
+                                json_object_new_string(
+                                    meter_get_details(mapping->meter()->protocolId())->name));
+
+                            struct json_object *json_tuples = api_json_tuples((*ch)->uuid());
+                            if (json_tuples)
+                                json_object_object_add(json_ch, "tuples", json_tuples);
+
+                            json_object_array_add(json_data, json_ch);
+                        }
+                    }
+                }
+
+                json_object_object_add(json_obj, "version", json_object_new_string(VERSION));
+                json_object_object_add(json_obj, "generator", json_object_new_string(PACKAGE));
+                json_object_object_add(json_obj, "data", json_data);
+
+                if (json_exception) {
+                    json_object_object_add(json_obj, "exception", json_exception);
+                }
+
+                json_str = json_object_to_json_string(json_obj);
+                response = MHD_create_response_from_buffer(
+                    strlen(json_str), static_cast<void *>(const_cast<char *>(json_str)),
+                    MHD_RESPMEM_MUST_COPY);
+                json_object_put(json_obj);
+
+                MHD_add_response_header(response, "Content-type", "application/json");
 			}
-
-			json_object_object_add(json_obj, "version", json_object_new_string(VERSION));
-			json_object_object_add(json_obj, "generator", json_object_new_string(PACKAGE));
-			json_object_object_add(json_obj, "data", json_data);
-
-			if (json_exception) {
-				json_object_object_add(json_obj, "exception", json_exception);
-			}
-
-			json_str = json_object_to_json_string(json_obj);
-			response = MHD_create_response_from_buffer(
-				strlen(json_str), static_cast<void *>(const_cast<char *>(json_str)),
-				MHD_RESPMEM_MUST_COPY);
-			json_object_put(json_obj);
-
-			MHD_add_response_header(response, "Content-type", "application/json");
 		} else {
 			char *response_str = strdup("not implemented\n");
 

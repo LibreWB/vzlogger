@@ -88,3 +88,14 @@ PrometheusClient::RegisterMetrics(vz::api::PrometheusMetric * metricPtr) {
     return counter;
 }
 
+std::vector<prometheus::MetricFamily> PrometheusClient::CollectMetrics() {
+    auto collectedMetrics = std::vector<prometheus::MetricFamily>{};
+
+    auto metrics = _registry->Collect();
+    collectedMetrics.insert(collectedMetrics.end(),
+                             std::make_move_iterator(metrics.begin()),
+                             std::make_move_iterator(metrics.end()));
+
+    return collectedMetrics;
+}
+

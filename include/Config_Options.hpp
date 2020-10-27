@@ -77,6 +77,7 @@ class Config_Options {
 	bool daemon() const { return _daemon; }
 	bool local() const { return _local; }
 	bool logging() const { return _logging; }
+	bool prometheus_metrics() const { return _prometheus_metrics; }
 
 	bool doRegistration() const { return _doRegistration; }
 
@@ -116,6 +117,7 @@ class Config_Options {
 	int _local : 1;          // enable local interface
 	int _logging : 1;        // start logging threads, depends on local & daemon
 	int _doRegistration : 1; // start logging threads, depends on local & daemon
+	int _prometheus_metrics : 1;
 };
 
 /**

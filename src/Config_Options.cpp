@@ -274,6 +274,11 @@ void Config_Options::config_parse_channel(Json &jso, MeterMap &mapping) {
 	//	print(log_error, "Missing middleware", NULL);
 	//	throw vz::VZException("Missing middleware.");
 	//}
+#ifdef ENABLE_PROMETHEUS_METRICS
+	if (apiProtocol_str == "prometheus") {
+        _prometheus_metrics = 1;
+	}
+#endif
 	if (apiProtocol_str.length() == 0) {
 		apiProtocol_str = "volkszaehler";
 	}

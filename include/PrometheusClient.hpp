@@ -60,6 +60,13 @@ class PrometheusClient {
         return instance;
     };
 
+	/**
+	 * Returns a vector with all results created by calling `prometheus::Counter#Collect()`
+	 * on registry. Calling `Collect()` on `prometheus::Registry` should be thread-safe.
+	 * @return Vector of collected metric families ready to be serialized
+	 */
+    std::vector<prometheus::MetricFamily> CollectMetrics();
+
   private:
     static PrometheusClient *instance;
 
