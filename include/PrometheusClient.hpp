@@ -27,53 +27,54 @@
 #ifndef __PROMETHEUSCLIENT_HPP_
 #define __PROMETHEUSCLIENT_HPP_
 
-#include <prometheus/counter.h>
-#include <prometheus/exposer.h>
-#include <prometheus/family.h>
-#include <prometheus/metric_family.h>
-#include <prometheus/registry.h>
+#include "prometheus/counter.h"
+#include "prometheus/exposer.h"
+#include "prometheus/family.h"
+#include "prometheus/metric_family.h"
+#include "prometheus/registry.h"
 
-#include <Channel.hpp>
-#include <api/PrometheusMetric.hpp>
-#include <common.h>
+#include "Channel.hpp"
+#include "api/PrometheusMetric.hpp"
+#include "common.h"
 
 class PrometheusClient {
   public:
-	// bool isConfigured() const;
-	// typedef vz::shared_ptr<vz::ApiIF> Ptr;
+    // bool isConfigured() const;
+    // typedef vz::shared_ptr<vz::ApiIF> Ptr;
 
-	PrometheusClient(PrometheusClient &other) = delete;
-	// void operator=(PrometheusClient &other) = delete;
+    PrometheusClient(PrometheusClient &other) = delete;
+    // void operator=(PrometheusClient &other) = delete;
 
-	/**
-	 * Register a Prometheus metric to registry.
-	 * If `metricPtr` is already added, its labels will be appended instead.
-	 *
-	 * @param metricPtr Metrics to be registered
-	 * @return Pointer to created counter that was added to a counter family
-	 */
-	std::unique_ptr<prometheus::Counter> RegisterMetrics(vz::api::PrometheusMetric *metricPtr);
+    /**
+     * Register a Prometheus metric to registry.
+     * If `metricPtr` is already added, its labels will be appended instead.
+     *
+     * @param metricPtr Metrics to be registered
+     * @return Pointer to created counter that was added to a counter family
+     */
+    std::unique_ptr<prometheus::Counter> RegisterMetrics(vz::api::PrometheusMetric *metricPtr);
 
-	static PrometheusClient *GetInstance() {
-		if (!instance)
-			instance = new PrometheusClient();
-		return instance;
-	};
-
-  private:
-	static PrometheusClient *instance;
-
-	PrometheusClient();
-	~PrometheusClient();
+    static PrometheusClient *GetInstance() {
+        if (!instance)
+            instance = new PrometheusClient();
+        return instance;
+    };
 
   private:
-	const char *LOG_NAME = "PrometheusClient";
+    static PrometheusClient *instance;
 
-	prometheus::Exposer _exposer{"127.0.0.1:8081"};
-	std::vector<prometheus::Family<prometheus::Counter>> _familyCounters;
-	std::shared_ptr<prometheus::Registry> _registry;
+    PrometheusClient();
+    ~PrometheusClient();
 
-	bool _ready;
+  private:
+    const char *LOG_NAME = "PrometheusClient";
+
+    prometheus::Exposer _exposer{"127.0.0.1:8081"};
+    std::vector<prometheus::Family<prometheus::Counter>> _familyCounters;
+    std::shared_ptr<prometheus::Registry> _registry;
+
+    bool _ready;
 }; // class PrometheusClient
 
 #endif /* __PROMETHEUSCLIENT_HPP_ */
+

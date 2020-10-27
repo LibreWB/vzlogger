@@ -24,64 +24,65 @@
  * along with volkszaehler.org. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <PrometheusClient.hpp>
+#include "PrometheusClient.hpp"
 
 PrometheusClient *PrometheusClient::instance = nullptr;
 
 PrometheusClient::PrometheusClient() {
-	print(log_debug, "Initializing PrometheusClient for Prometheus metrics", LOG_NAME);
-	_ready = false;
+    print(log_debug, "Initializing PrometheusClient for Prometheus metrics", LOG_NAME);
+    _ready = false;
 
-	_registry = std::shared_ptr<prometheus::Registry>();
+    _registry = std::shared_ptr<prometheus::Registry>();
 
-	if (_registry != nullptr) {
-		_ready = true;
-	} else {
-		print(log_alert,
-			  "Prometheus Registry could not be found. Deconstructing PrometheusClient...",
-			  LOG_NAME);
-		delete this;
-	}
+    if (_registry != nullptr) {
+        _ready = true;
+    } else {
+        print(log_alert,
+              "Prometheus Registry could not be found. Deconstructing PrometheusClient...",
+              LOG_NAME);
+        delete this;
+    }
 
-	print(log_debug, "Registering Prometheus metrics registry to exposer", LOG_NAME);
-	_exposer.RegisterCollectable(_registry);
+    print(log_debug, "Registering Prometheus metrics registry to exposer", LOG_NAME);
+    _exposer.RegisterCollectable(_registry);
 }
 
 PrometheusClient::~PrometheusClient() {
-	_ready = false;
-	_registry.reset();
+    _ready = false;
+    _registry.reset();
 }
 
 std::unique_ptr<prometheus::Counter>
 PrometheusClient::RegisterMetrics(vz::api::PrometheusMetric * metricPtr) {
-	vz::api::PrometheusMetricDescription *description = metricPtr->description();
-	prometheus::Family<prometheus::Counter> *familyCounter;
+    vz::api::PrometheusMetricDescription *description = metricPtr->description();
+    prometheus::Family<prometheus::Counter> *familyCounter;
 
-	for (auto &_familyCounter : _familyCounters) {
-		if (_familyCounter.GetName() == description->measurementName) {
-			familyCounter = &_familyCounter;
+    for (auto &_familyCounter : _familyCounters) {
+        if (_familyCounter.GetName() == description->measurementName) {
+            familyCounter = &_familyCounter;
 
-			print(log_debug,
-				  R"(Existing counter family "%s" found. Will append labels to existing family.)",
-				  description->measurementName.c_str(), LOG_NAME);
-		}
-	}
+            print(log_debug,
+                  R"(Existing counter family "%s" found. Will append labels to existing family.)",
+                  description->measurementName.c_str(), LOG_NAME);
+        }
+    }
 
-	if (!familyCounter) {
-		familyCounter = &prometheus::BuildCounter()
-							 .Name(description->measurementName)
-							 .Help(description->helpText)
-							 .Register(*_registry);
-		_familyCounters.push_back(*familyCounter);
+    if (!familyCounter) {
+        familyCounter = &prometheus::BuildCounter()
+            .Name(description->measurementName)
+            .Help(description->helpText)
+            .Register(*_registry);
+        _familyCounters.push_back(*familyCounter);
 
-		print(log_debug, R"(Counter family %s does not exist. Created new one.)",
-			  description->measurementName.c_str(), LOG_NAME);
-	}
+        print(log_debug, R"(Counter family %s does not exist. Created new one.)",
+              description->measurementName.c_str(), LOG_NAME);
+    }
 
-	std::unique_ptr<prometheus::Counter> counter(
-		&familyCounter->Add({{description->label, "0.0"}}));
-	print(log_debug, R"(Appended label "%s" to counter family "%s" and created unique pointer.)",
-		  description->label.c_str(), description->measurementName.c_str(), LOG_NAME);
+    std::unique_ptr<prometheus::Counter> counter(
+        &familyCounter->Add({{description->label, "0.0"}}));
+    print(log_debug, R"(Appended label "%s" to counter family "%s" and created unique pointer.)",
+          description->label.c_str(), description->measurementName.c_str(), LOG_NAME);
 
-	return counter;
+    return counter;
 }
+

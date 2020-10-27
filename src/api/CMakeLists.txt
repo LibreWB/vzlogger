@@ -9,7 +9,8 @@ set(api_srcs
   CurlIF.cpp
   CurlCallback.cpp
   CurlResponse.cpp
-        PrometheusMetric.cpp)
+  PrometheusMetric.cpp
+  )
 
 add_library(vz-api ${api_srcs})
 install(TARGETS vz-api

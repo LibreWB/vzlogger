@@ -22,6 +22,8 @@ else(ENABLE_MQTT)
   set(mqtt_srcs "")
 endif(ENABLE_MQTT)
 
+set(prometheus_srcs PrometheusClient.cpp)
+
 configure_file("${CMAKE_SOURCE_DIR}/src/gitSha1.cpp.in" "${CMAKE_BINARY_DIR}/gitSha1.cpp" @ONLY)
 
 set(vzlogger_srcs
@@ -44,6 +46,7 @@ set(libvz_srcs
   exception.cpp
   ${local_srcs}
   ${mqtt_srcs}
+  ${prometheus_srcs}
   MeterMap.cpp
   )
 
@@ -68,6 +71,10 @@ endif(LOCAL_SUPPORT)
 if(ENABLE_MQTT)
 target_link_libraries(vzlogger ${MQTT_LIBRARY})
 endif(ENABLE_MQTT)
+
+if(ENABLE_PROMETHEUS_METRICS)
+target_link_libraries(vzlogger "${PROMETHEUS_CPP_LIBRARY}")
+endif(ENABLE_PROMETHEUS_METRICS)
 
 target_link_libraries(vzlogger ${LIBGCRYPT})
 target_link_libraries(vzlogger pthread m ${LIBUUID})
