@@ -72,8 +72,9 @@ target_link_libraries(vzlogger ${MQTT_LIBRARY})
 endif(ENABLE_MQTT)
 
 if(ENABLE_PROMETHEUS_METRICS)
-  message(WARNING "${PROMETHUS_CPP_LIBRARY}")
-target_link_libraries(vzlogger "${PROMETHEUS_CPP_LIBRARY}")
+target_link_libraries(vzlogger "${PROMETHEUS_CPP_LIBRARY_CORE}")
+target_link_libraries(vzlogger "${PROMETHEUS_CPP_LIBRARY_PUSH}")
+target_link_libraries(vzlogger "${PROMETHEUS_CPP_LIBRARY_PULL}")
 endif(ENABLE_PROMETHEUS_METRICS)
 
 target_link_libraries(vzlogger ${LIBGCRYPT})
