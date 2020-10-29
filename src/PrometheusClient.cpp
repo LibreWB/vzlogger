@@ -26,18 +26,22 @@
 
 #include <PrometheusClient.hpp>
 
+PrometheusClient *PrometheusClient::instance = nullptr;
+
 PrometheusClient::PrometheusClient() {
     print(log_debug, "Initializing PrometheusClient for Prometheus metrics", LOG_NAME);
 
-    _registry = std::shared_ptr<prometheus::Registry>();
-
-    print(log_debug, "Registering Prometheus metrics registry to exposer", LOG_NAME);
-    _exposer.RegisterCollectable(_registry);
+	_registry = std::make_shared<prometheus::Registry>();
 }
 
 PrometheusClient::~PrometheusClient() {
-    //_ready = false;
     _registry.reset();
+
+	for (auto familyCounter : _familyCounters) {
+		delete &familyCounter;
+		familyCounter = nullptr;
+	}
+	_familyCounters.clear();
 }
 
 std::vector<prometheus::MetricFamily> PrometheusClient::CollectMetrics() {

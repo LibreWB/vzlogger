@@ -24,53 +24,52 @@
  * along with volkszaehler.org. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef VZLOGGER_PROMETHEUSCLIENT_HPP
-#define VZLOGGER_PROMETHEUSCLIENT_HPP
+#ifndef __PROMETHEUSCLIENT_HPP_
+#define __PROMETHEUSCLIENT_HPP_
 
 #include <api/PrometheusMetric.hpp>
 #include <prometheus/counter.h>
-#include <prometheus/exposer.h>
 #include <prometheus/metric_family.h>
+#include <prometheus/registry.h>
 
 class PrometheusClient {
   public:
-    PrometheusClient(PrometheusClient &other) = delete;
-    void operator=(PrometheusClient &other) = delete;
+	PrometheusClient(PrometheusClient &other) = delete;
+	void operator=(PrometheusClient &other) = delete;
 
-    /**
-     * Register a Prometheus metric to registry.
-     * If `metricPtr` is already added, its labels will be appended instead.
-     *
-     * @param metricPtr Metrics to be registered
-     * @return Pointer to created counter that was added to a counter family
-     */
-    std::unique_ptr<prometheus::Counter> RegisterMetrics(vz::api::PrometheusMetric *metricPtr);
+	/**
+	 * Register a Prometheus metric to registry.
+	 * If `metricPtr` is already added, its labels will be appended instead.
+	 *
+	 * @param metricPtr Metrics to be registered
+	 * @return Pointer to created counter that was added to a counter family
+	 */
+	std::unique_ptr<prometheus::Counter> RegisterMetrics(vz::api::PrometheusMetric *metricPtr);
 
-    static PrometheusClient *GetInstance() {
-        if (!instance)
-            instance = new PrometheusClient();
-        return instance;
-    };
+	static PrometheusClient *GetInstance() {
+		if (!instance)
+			instance = new PrometheusClient();
+		return instance;
+	};
 
-    /**
-     * Returns a vector with all results created by calling `prometheus::Counter#Collect()`
-     * on registry. Calling `Collect()` on `prometheus::Registry` should be thread-safe.
-     * @return Vector of collected metric families ready to be serialized
-     */
-    std::vector<prometheus::MetricFamily> CollectMetrics();
-
-  private:
-    static PrometheusClient *instance;
-
-    PrometheusClient();
-    ~PrometheusClient();
+	/**
+	 * Returns a vector with all results created by calling `prometheus::Counter#Collect()`
+	 * on registry. Calling `Collect()` on `prometheus::Registry` should be thread-safe.
+	 * @return Vector of collected metric families ready to be serialized
+	 */
+	std::vector<prometheus::MetricFamily> CollectMetrics();
 
   private:
-    const char *LOG_NAME = "PrometheusClient";
+	static PrometheusClient *instance;
 
-    prometheus::Exposer _exposer{"127.0.0.1:8081"};
-    std::vector<prometheus::Family<prometheus::Counter> *> _familyCounters;
-    std::shared_ptr<prometheus::Registry> _registry;
+	PrometheusClient();
+	~PrometheusClient();
+
+  private:
+	const char *LOG_NAME = "PrometheusClient";
+
+	std::vector<prometheus::Family<prometheus::Counter> *> _familyCounters;
+	std::shared_ptr<prometheus::Registry> _registry;
 }; // class PrometheusClient
 
-#endif /* VZLOGGER_PROMETHEUSCLIENT_HPP */
+#endif /* __PROMETHEUSCLIENT_HPP_ */
