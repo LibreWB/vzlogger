@@ -124,8 +124,6 @@ void MeterMap::registration() {
 				new vz::api::PrometheusMetric(*ch, (*ch)->options());
 			api = vz::ApiIF::Ptr(prometheusMetric);
 			print(log_debug, "Using Prometheus API", (*ch)->name());
-			prometheusMetric->InitCounter(PrometheusClient::GetInstance());
-			print(log_debug, "Registering Prometheus metric", (*ch)->name());
 		} else {
 			if (strcasecmp((*ch)->apiProtocol().c_str(), "volkszaehler"))
 				print(log_alert, "Wrong config! api: <%s> is unknown!", (*ch)->name(),

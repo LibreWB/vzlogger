@@ -60,7 +60,7 @@
 #endif
 
 #ifdef ENABLE_PROMETHEUS_METRICS
-#include <Prometheus.hpp>
+#include <PrometheusClient.hpp>
 #endif
 
 #include "gitSha1.h"
@@ -389,7 +389,7 @@ int main(int argc, char *argv[]) {
 #endif /* LOCAL_SUPPORT */
 
 #ifdef ENABLE_PROMETHEUS_METRICS
-	PrometheusClient *prometheusClient;
+	//PrometheusClient *prometheusClient = PrometheusClient::GetInstance();
 #endif
 
 	sigaction(SIGINT, &action, NULL);  /* catch ctrl-c from terminal */

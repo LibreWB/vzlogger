@@ -7,6 +7,8 @@
  * @author Humenius <contact@humenius.me>
  */
 
+#include <PrometheusClient.hpp>
+#include <api/PrometheusMetric.hpp>
 /*
  * This file is part of volkzaehler.org
  *
@@ -24,10 +26,6 @@
  * along with volkszaehler.org. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <PrometheusClient.hpp>
-#include <VZException.hpp>
-#include <api/PrometheusMetric.hpp>
-#include <common.h>
 
 static const char *OPTION_MEASUREMENT_NAME__KEY = "measurement_name";
 static const char *OPTION_LABEL__KEY = "label";
@@ -87,7 +85,7 @@ vz::api::PrometheusMetric::PrometheusMetric(Channel::Ptr ch, std::list<Option> o
 		throw;
 	}
 
-	// std::string counter_name = "vzlogger_" + _measurementName;
+	_counter = PrometheusClient::GetInstance()->RegisterMetrics(this);
 }
 
 vz::api::PrometheusMetric::~PrometheusMetric() { _counter = nullptr; }
@@ -97,17 +95,12 @@ void vz::api::PrometheusMetric::send() {
 	Buffer::Ptr buffer = ch->buffer();
 
 	buffer->lock();
-	for (auto & it : *buffer) {
-		// TODO What to do with timestamp? Is that "relevant"?
-		print(log_finest, "Reading buffer: timestamp %lld - value %f", ch->name(),
-			  it.time_ms(), it.value());
-		_counter->Increment(it.value());
-	}
+	const Buffer::iterator &lastEntry = buffer->end();
+	print(log_finest, "Reading buffer: timestamp %lld - value %f", ch->name(), lastEntry->time_ms(),
+		  lastEntry->value());
+	_counter->Increment(lastEntry->value());
+	lastEntry->mark_delete();
 	buffer->unlock();
 }
 
-void vz::api::PrometheusMetric::InitCounter(PrometheusClient *prometheusClient) {
-	_counter = prometheusClient->RegisterMetrics(this);
-}
-
-// void vz::api::PrometheusMetric::register_device() { /* No impl */}
+void vz::api::PrometheusMetric::register_device() { /* No impl */ }

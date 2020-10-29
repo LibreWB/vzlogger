@@ -29,7 +29,8 @@
 
 #include <ApiIF.hpp>
 #include <Options.hpp>
-#include <PrometheusClient.hpp>
+#include <VZException.hpp>
+#include <common.h>
 #include <prometheus/counter.h>
 
 namespace vz {
@@ -53,12 +54,11 @@ class PrometheusMetric : public ApiIF {
 	 * object
 	 * @param prometheusClient Instance of `PrometheusClient`
 	 */
-	void InitCounter(PrometheusClient *prometheusClient);
+	// void InitCounter(PrometheusClient *prometheusClient);
 
-	void send();
+	void send() override;
 
-	/** no-op **/
-	virtual void register_device();
+	void register_device() override;
 
 	PrometheusMetricDescription *description() { return &_description; };
 

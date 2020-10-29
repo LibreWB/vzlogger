@@ -24,26 +24,18 @@
  * along with volkszaehler.org. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __PROMETHEUSCLIENT_HPP_
-#define __PROMETHEUSCLIENT_HPP_
+#ifndef VZLOGGER_PROMETHEUSCLIENT_HPP
+#define VZLOGGER_PROMETHEUSCLIENT_HPP
 
-#include "prometheus/counter.h"
-#include "prometheus/exposer.h"
-#include "prometheus/family.h"
-#include "prometheus/metric_family.h"
-#include "prometheus/registry.h"
-
-#include "Channel.hpp"
-#include "api/PrometheusMetric.hpp"
-#include "common.h"
+#include <api/PrometheusMetric.hpp>
+#include <prometheus/counter.h>
+#include <prometheus/exposer.h>
+#include <prometheus/metric_family.h>
 
 class PrometheusClient {
   public:
-    // bool isConfigured() const;
-    // typedef vz::shared_ptr<vz::ApiIF> Ptr;
-
     PrometheusClient(PrometheusClient &other) = delete;
-    // void operator=(PrometheusClient &other) = delete;
+    void operator=(PrometheusClient &other) = delete;
 
     /**
      * Register a Prometheus metric to registry.
@@ -60,11 +52,11 @@ class PrometheusClient {
         return instance;
     };
 
-	/**
-	 * Returns a vector with all results created by calling `prometheus::Counter#Collect()`
-	 * on registry. Calling `Collect()` on `prometheus::Registry` should be thread-safe.
-	 * @return Vector of collected metric families ready to be serialized
-	 */
+    /**
+     * Returns a vector with all results created by calling `prometheus::Counter#Collect()`
+     * on registry. Calling `Collect()` on `prometheus::Registry` should be thread-safe.
+     * @return Vector of collected metric families ready to be serialized
+     */
     std::vector<prometheus::MetricFamily> CollectMetrics();
 
   private:
@@ -77,11 +69,8 @@ class PrometheusClient {
     const char *LOG_NAME = "PrometheusClient";
 
     prometheus::Exposer _exposer{"127.0.0.1:8081"};
-    std::vector<prometheus::Family<prometheus::Counter>> _familyCounters;
+    std::vector<prometheus::Family<prometheus::Counter> *> _familyCounters;
     std::shared_ptr<prometheus::Registry> _registry;
-
-    bool _ready;
 }; // class PrometheusClient
 
-#endif /* __PROMETHEUSCLIENT_HPP_ */
-
+#endif /* VZLOGGER_PROMETHEUSCLIENT_HPP */
