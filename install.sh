@@ -264,7 +264,7 @@ pushd "$lib_dir"
 
 			cd _build
 
-			cmake .. -DBUILD_SHARED_LIBS=OFF # Create static libraries
+			cmake ..
 			make -j 4
 			ctest -V
 
